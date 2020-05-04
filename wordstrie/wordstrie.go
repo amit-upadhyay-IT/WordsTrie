@@ -123,7 +123,7 @@ func getMatchingFactor(words []string, state MatchState, endNode *TrieNode) int 
  already a perfect match and giving more possibilities of matched items would be a semantics error
  */
 func getSearchResult(words []string, state MatchState, endNode *TrieNode) []string {
-	result := make([]string, 1)
+	result := make([]string, 0)
 
 	if state == PERFECT_MATCH {
 		 result = append(result, strings.Join(words, " "))
@@ -139,7 +139,7 @@ func getSearchResult(words []string, state MatchState, endNode *TrieNode) []stri
 }
 
 func getPossibleSearchResult(words []string, endNode *TrieNode) []string {
-	result := make([]string, 1)
+	result := make([]string, 0)
 
 	firstHalf := strings.Join(words, " ")
 
@@ -161,49 +161,43 @@ func getPossibleSearchResult(words []string, endNode *TrieNode) []string {
 	return: []string{"larsen and turbo pvt ltd", "larsen and turbo infotech pvt ltd"}
  */
 
-func traverseDown(currentNode *TrieNode) [][]string {
 
-	result := make([][]string, 2)
-	for i := 0; i < 2; i++ {
-		result[i] = make([]string, 2)
-	}
-	wordsList := make([]string, 0)
-
-	traverse(currentNode, wordsList, result)
-
-	return result123
+type ResultStrings struct {
+	result [][]string
 }
 
-var result123 [][]string = make([][]string, 0)
+func traverseDown(currentNode *TrieNode) [][]string {
 
-func traverse(node *TrieNode, words []string, finalResult [][]string) {
+	result := &ResultStrings{result: make([][]string, 0)}
+	wordsList := make([]string, 0)
+	traverse(currentNode, wordsList, result)
+
+	return result.result
+}
+
+func traverse(node *TrieNode, words []string, res *ResultStrings) {
 
 	if node.terminatingCount > 0 {
-		// copying and putting in finalResult
-		//wordsCpy := make([]string, len(words))
-		//copy(wordsCpy, words)
 		//finalResult = append(finalResult, deepCopyList(words))
-		result123 = append(result123, words)
+		res.result = append(res.result, deepCopyList(words))
 		if len(node.childNode) > 0 {
 			for key, val := range node.childNode {
 				words = append(words, key)
-				traverse(val, words, finalResult)
+				traverse(val, words, res)
 				words = words[:len(words)-1]
 			}
 		}
 	} else {
 		for key, val := range node.childNode {
 			words = append(words, key)
-			traverse(val, words, finalResult)
+			traverse(val, words, res)
 			words = words[:len(words)-1]
 		}
 	}
 }
 
 func deepCopyList(list []string)  []string {
-	res := make([]string, 0)
-	for _, v := range list {
-		res = append(res, v)
-	}
+	res := make([]string, len(list))
+	copy(res, list)
 	return res
 }
