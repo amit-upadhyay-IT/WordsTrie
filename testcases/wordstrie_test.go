@@ -33,6 +33,127 @@ func TestPerfectMatch_02(t *testing.T) {
 	failureAssertionForPerfectMatch(res, "Avenue Supermarts Limited", t)
 }
 
+
+func TestPartialMatch_01(t *testing.T) {
+	wordsTrie := wordstrie.GetInstance()
+	insertionData := getKeysToInsert()
+	wordsTrie.Insert(insertionData)
+	testCaseDic := getExpectedPartialTestValues()
+	for key, val := range testCaseDic {
+		searchResult := wordsTrie.Search(key)
+		matchingFactor := searchResult.GetMatchingFactor()
+		failureAssertionForPartialMatch(key, val, insertionData, matchingFactor, searchResult, t)
+	}
+}
+
+func failureAssertionForPartialMatch(key string, val []string, insertionData []string,
+		matchingFactor int, res wordstrie.SearchResult, t *testing.T) {
+
+	if len(strings.Fields(key)) != matchingFactor {
+		t.Error(
+			"For", key,
+			"expected MatchingFactor", len(strings.Fields(key)),
+			"got", res.GetMatchingFactor(),
+		)
+	}
+	if contains(insertionData, key) {
+		if res.GetMatchState() != 0 {
+			t.Error(
+				"For", key,
+				"expected MatchState", 0,
+				"got", res.GetMatchState(),
+			)
+		}
+	} else {
+		if res.GetMatchState() != 1 {
+			t.Error(
+				"For", key,
+				"expected MatchState", 1,
+				"got", res.GetMatchState(),
+			)
+		}
+	}
+	if !isListsEqual(res.GetSearchResult(), val) {
+		t.Error(
+			"For", key,
+			"expected SearchResult", val,
+			"got", res.GetSearchResult(),
+		)
+	}
+}
+
+func isListsEqual(lis1, lis2 []string) bool {
+
+	if len(lis1) != len(lis2) {
+		return false
+	}
+
+	for _, item := range lis1 {
+		if !contains(lis2, item) {
+			return false
+		}
+	}
+
+	//for _, item := range lis2 {
+	//	if !contains(lis1, item) {
+	//		return false
+	//	}
+	//}
+	return true;
+}
+
+func contains(lis []string, keyword string) bool {
+	for _, v := range lis {
+		if keyword == v {
+			return true
+		}
+	}
+	return false
+}
+
+func getExpectedPartialTestValues() map[string][]string {
+	companyNames := getKeysToInsert()
+	dic := make(map[string][]string)
+	for _, company := range companyNames {
+		words := strings.Fields(company)
+		toMatch := make([]string, 0)
+		for _, word := range words {
+			toMatch = append(toMatch, word)
+			matchingComp := getMatchIfAvailable(companyNames, strings.Join(toMatch, " "))
+			dic[strings.Join(toMatch, " ")] = matchingComp
+		}
+	}
+	return dic
+}
+
+func getMatchIfAvailable(companyNames []string, word string) []string {
+
+	matchingCompanies  := make([]string, 0)
+	for _, company := range companyNames {
+		if strings.HasPrefix(company, word) && isMatchFinal(company, word) {
+			matchingCompanies = append(matchingCompanies, company)
+		}
+	}
+	return matchingCompanies
+}
+
+func isMatchFinal(company, word string) bool {
+	begIndex := strings.Index(company, word)
+	if begIndex != -1 {
+		finalIndex := begIndex + len(word)
+		if finalIndex < len(company) {  // Nandani And Arman, Nandan, finalIndex = 6, company[finalIndex] should be a space
+			if rune(company[finalIndex]) == ' ' {
+				return true
+			}
+		} else if company == word {
+			return true
+		}
+	}
+	return false
+}
+
+
+
 func failureAssertionForPerfectMatch(res wordstrie.SearchResult, item string, t *testing.T) {
 	if res.GetMatchState() != 0 {
 		t.Error(
@@ -65,7 +186,7 @@ func getKeysToInsert() []string {
 	abs, _ := filepath.Abs("../nse_data/name_to_symbol.json")
 	content, _ := io.ReadFileBytes(abs)
 	_ = json.Unmarshal(content, &companyMap)
-	return getKeysFromMap(companyMap)
+	return removeMulSpaces(getKeysFromMap(companyMap))
 }
 
 func getKeysFromMap(dic map[string]string) []string {
@@ -75,3 +196,12 @@ func getKeysFromMap(dic map[string]string) []string {
 	}
 	return result
 }
+
+func removeMulSpaces(lis []string) []string {
+	res := make([]string, 0)
+	for _, item := range lis {
+		res = append(res, strings.Join(strings.Fields(item), " "))
+	}
+	return res
+}
+
