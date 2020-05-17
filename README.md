@@ -1,5 +1,10 @@
 # WordsTrie
 
+import it this way:
+```go
+go get https://github.com/amit-upadhyay-IT/WordsTrie.git
+```
+
 ## Application:
 - Search the similar stock name from a list of stock names
 
