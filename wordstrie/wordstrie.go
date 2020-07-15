@@ -45,6 +45,8 @@ func (wt *wordsTrie) Insert(sentencesList []string)  {
 
 		for _, word := range words {
 
+			// TODO: this can be optimized by not getting a new trie node always, as this isn't required in case
+			// trie has already a node with the current key
 			nextNode := GetTrieNode()
 
 			if val, ok := localRoot.childNode[word]; ok {
